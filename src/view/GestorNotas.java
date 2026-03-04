@@ -4,7 +4,11 @@ import model.Nota;
 import model.Usuario;
 import util.GestionDatos;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
 import java.awt.*;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Map;
@@ -21,6 +25,8 @@ public class GestorNotas extends JFrame {
     private JLabel lblEstado;
     private Usuario usuarioActual;
     private Map<String, Usuario> mapaGlobal;
+    private JLabel lblContador;
+    private JButton btnGuardar, btnEliminar, btnLimpiar, btnBorrarTodo, btnExportar, btnLogout;
 
     public GestorNotas(Usuario usuario, Map<String, Usuario> mapa) {
         super("Gestor de Notas - Usuario: " + usuario.getUsername());
@@ -47,6 +53,14 @@ public class GestorNotas extends JFrame {
         txtContenido = new JTextArea();
         txtContenido.setLineWrap(true);
         lblEstado = new JLabel("Sesión iniciada: " + usuarioActual.getUsername());
+        lblContador = new JLabel("Notas: 0");
+
+        btnGuardar = new JButton("Guardar");
+        btnLimpiar = new JButton("Limpiar");
+        btnEliminar = new JButton("Eliminar");
+        btnBorrarTodo = new JButton("Borrar Todo");
+        btnExportar = new JButton("Exportar TXT");
+        btnLogout = new JButton("Cerrar Sesión");
     }
 
     private void setupLayout() {
@@ -74,13 +88,6 @@ public class GestorNotas extends JFrame {
         // PANEL INFERIOR: Botones de acción
         JPanel panelInferior = new JPanel(new BorderLayout());
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        JButton btnGuardar = new JButton("Guardar");
-        JButton btnLimpiar = new JButton("Limpiar");
-        JButton btnEliminar = new JButton("Eliminar");
-        JButton btnBorrarTodo = new JButton("Borrar Todo"); // Requisito de advertencia
-        JButton btnExportar = new JButton("Exportar TXT"); // Mejora avanzada
-        JButton btnLogout = new JButton("Cerrar Sesión");
 
         // Colores para destacar acciones de borrado o logout
         btnBorrarTodo.setBackground(new Color(220, 50, 50));
@@ -143,12 +150,25 @@ public class GestorNotas extends JFrame {
             }
         });
 
-        // Búsqueda en tiempo real (Mejora avanzada)
-        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
+        // Buscador LIVE con DocumentListener (Mejora Avanzada) [cite: 451, 471]
+        txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                filtrarNotas();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                filtrarNotas();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
                 filtrarNotas();
             }
         });
+    }
+
+    private void gestionarBotones(boolean notaSeleccionada) {
+        btnEliminar.setEnabled(notaSeleccionada);
+        btnGuardar.setText(notaSeleccionada ? "Actualizar Nota" : "Crear Nueva");
     }
 
     /**
@@ -163,6 +183,7 @@ public class GestorNotas extends JFrame {
                     if (n != null) {
                         txtTitulo.setText(n.getTitulo());
                         txtContenido.setText(n.getContenido());
+                        gestionarBotones(true);
                     }
                 }
             }
@@ -183,9 +204,11 @@ public class GestorNotas extends JFrame {
         Nota seleccionada = listaNotasUI.getSelectedValue();
         if (seleccionada == null) {
             usuarioActual.getMisNotas().add(new Nota(tit, cont));
+            lblEstado.setText("Nota creada automáticamente.");
         } else {
             seleccionada.setTitulo(tit);
             seleccionada.setContenido(cont);
+            lblEstado.setText("Nota actualizada automáticamente.");
         }
         actualizarTodo();
         lblEstado.setText("Nota guardada automáticamente.");
@@ -201,6 +224,7 @@ public class GestorNotas extends JFrame {
             usuarioActual.getMisNotas().clear();
             actualizarTodo();
             limpiarCampos();
+            lblEstado.setText("Todas las notas han sido borradas.");
         }
     }
 
@@ -208,16 +232,23 @@ public class GestorNotas extends JFrame {
      * Mejora Avanzada: Exporta las notas actuales a un archivo legible por humanos.
      */
     private void exportarNotas() {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(usuarioActual.getUsername() + "_notas.txt"))) {
-            pw.println("--- EXPORTACIÓN DE NOTAS ---");
-            for (Nota n : usuarioActual.getMisNotas()) {
-                pw.println("TÍTULO: " + n.getTitulo());
-                pw.println("CONTENIDO: " + n.getContenido());
-                pw.println("-----------------------------");
+        JFileChooser selector = new JFileChooser();
+        selector.setDialogTitle("Selecciona dónde exportar tus notas");
+
+        int resultado = selector.showSaveDialog(this);
+        if (resultado == JFileChooser.APPROVE_OPTION) {
+            File destino = selector.getSelectedFile();
+            try (PrintWriter pw = new PrintWriter(new FileWriter(destino + ".txt"))) {
+                pw.println("--- EXPORTACIÓN DE NOTAS ---");
+                for (Nota n : usuarioActual.getMisNotas()) {
+                    pw.println("TÍTULO: " + n.getTitulo());
+                    pw.println("CONTENIDO: " + n.getContenido());
+                    pw.println("-----------------------------");
+                }
+                JOptionPane.showMessageDialog(this, "Exportado correctamente en: " + destino.getName());
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error al exportar.");
             }
-            JOptionPane.showMessageDialog(this, "Exportado correctamente.");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al exportar.");
         }
     }
 
@@ -227,6 +258,7 @@ public class GestorNotas extends JFrame {
             usuarioActual.getMisNotas().remove(n);
             actualizarTodo();
             limpiarCampos();
+            lblEstado.setText("Nota eliminada correctamente.");
         }
     }
 
@@ -254,12 +286,14 @@ public class GestorNotas extends JFrame {
         modeloLista.clear();
         for (Nota n : lista)
             modeloLista.addElement(n);
+        lblContador.setText("Notas: " + modeloLista.size());
     }
 
     private void limpiarCampos() {
         txtTitulo.setText("");
         txtContenido.setText("");
         listaNotasUI.clearSelection();
+        gestionarBotones(false);
     }
 
     private void cerrarSesion() {
