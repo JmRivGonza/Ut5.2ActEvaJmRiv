@@ -42,7 +42,7 @@ replay_pid*
 # Directorios de compilación y construcción
 # ===============================
 # Directorios comunes de compilación
-/bin/
+./bin/
 /build/
 /out/
 /target/
