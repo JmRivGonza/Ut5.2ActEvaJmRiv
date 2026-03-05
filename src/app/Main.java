@@ -3,6 +3,7 @@ package app;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import config.UIConfig;
 import view.Login;
 
 public class Main {
@@ -11,6 +12,7 @@ public class Main {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
         }
+        UIConfig.aplicarEstilos();
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

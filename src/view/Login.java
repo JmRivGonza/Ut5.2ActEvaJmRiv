@@ -17,30 +17,49 @@ public class Login extends JFrame {
     public Login() {
         super("Acceso al Gestor");
         baseDatos = GestionDatos.cargar(); // Carga previa de datos persistentes
-        
+
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
         // Configuración de componentes en la rejilla
-        gbc.gridx = 0; gbc.gridy = 0; add(new JLabel("Usuario:"), gbc);
-        gbc.gridx = 1; add(txtUser, gbc);
-        gbc.gridx = 0; gbc.gridy = 1; add(new JLabel("Password:"), gbc);
-        gbc.gridx = 1; add(txtPass, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        add(new JLabel("Usuario:"), gbc);
+        gbc.gridx = 1;
+        add(txtUser, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        add(new JLabel("Contraseña:"), gbc);
+        gbc.gridx = 1;
+        add(txtPass, gbc);
 
         JButton btnEntrar = new JButton("Entrar");
         JButton btnRegistro = new JButton("Registrar");
-        
+
         JPanel pnlBotones = new JPanel();
         pnlBotones.add(btnRegistro);
         pnlBotones.add(btnEntrar);
-        
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
         add(pnlBotones, gbc);
 
         // Lógica de botones
-        btnRegistro.addActionListener(e -> registrar());
-        btnEntrar.addActionListener(e -> entrar());
+        btnRegistro.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                registrar();
+            }
+        });
+
+        btnEntrar.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                entrar();
+            }
+        });
 
         pack();
         setLocationRelativeTo(null);
@@ -77,11 +96,5 @@ public class Login extends JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "Credenciales incorrectas.");
         }
-    }
-
-    public static void main(String[] args) {
-        // Intenta usar el diseño visual del sistema operativo
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) {}
-        SwingUtilities.invokeLater(() -> new Login().setVisible(true));
     }
 }
