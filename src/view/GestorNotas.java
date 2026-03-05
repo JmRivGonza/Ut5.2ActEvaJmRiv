@@ -18,6 +18,7 @@ import java.util.Map;
  * Implementa Nivel 1, Nivel 2 y Mejoras Avanzadas.
  */
 public class GestorNotas extends JFrame {
+    // Atributos
     private DefaultListModel<Nota> modeloLista;
     private JList<Nota> listaNotasUI;
     private JTextField txtTitulo, txtBuscar;
@@ -46,6 +47,7 @@ public class GestorNotas extends JFrame {
     }
 
     private void initComponents() {
+        // Inicializamos los componentes
         modeloLista = new DefaultListModel<>();
         listaNotasUI = new JList<>(modeloLista);
         txtTitulo = new JTextField();
@@ -64,11 +66,14 @@ public class GestorNotas extends JFrame {
     }
 
     private void setupLayout() {
+        // Configuración del layout principal
         setLayout(new BorderLayout(10, 10));
 
         // PANEL IZQUIERDO: Búsqueda dinámica y listado
         JPanel panelIzquierdo = new JPanel(new BorderLayout(5, 5));
         panelIzquierdo.setBorder(BorderFactory.createTitledBorder("Mis Notas"));
+
+        // Panel de búsqueda
         JPanel panelBusqueda = new JPanel(new BorderLayout());
         panelBusqueda.add(new JLabel(" Buscar: "), BorderLayout.WEST);
         panelBusqueda.add(txtBuscar, BorderLayout.CENTER);
@@ -80,6 +85,8 @@ public class GestorNotas extends JFrame {
         JPanel panelEditor = new JPanel(new BorderLayout(5, 5));
         panelEditor.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         JPanel titPanel = new JPanel(new BorderLayout());
+
+        // Panel del título
         titPanel.add(new JLabel("Título:"), BorderLayout.NORTH);
         titPanel.add(txtTitulo, BorderLayout.CENTER);
         panelEditor.add(titPanel, BorderLayout.NORTH);
@@ -93,6 +100,7 @@ public class GestorNotas extends JFrame {
         btnBorrarTodo.setBackground(new Color(220, 50, 50));
         btnBorrarTodo.setForeground(Color.WHITE);
 
+        // Añadimos los botones al panel de botones
         panelBotones.add(btnExportar);
         panelBotones.add(btnLimpiar);
         panelBotones.add(btnGuardar);
@@ -100,6 +108,7 @@ public class GestorNotas extends JFrame {
         panelBotones.add(btnBorrarTodo);
         panelBotones.add(btnLogout);
 
+        // Añadimos los paneles al layout principal
         panelInferior.add(panelBotones, BorderLayout.NORTH);
         panelInferior.add(lblEstado, BorderLayout.SOUTH);
 
@@ -167,6 +176,7 @@ public class GestorNotas extends JFrame {
     }
 
     private void gestionarBotones(boolean notaSeleccionada) {
+        // Si hay nota seleccionada, activamos el botón de eliminar y cambiamos el texto del botón de guardar
         btnEliminar.setEnabled(notaSeleccionada);
         btnGuardar.setText(notaSeleccionada ? "Actualizar Nota" : "Crear Nueva");
     }
@@ -177,6 +187,7 @@ public class GestorNotas extends JFrame {
     private void setupEvents() {
         listaNotasUI.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             @Override
+            // Método que se ejecuta al seleccionar una nota de la lista
             public void valueChanged(javax.swing.event.ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
                     Nota n = listaNotasUI.getSelectedValue();
@@ -201,15 +212,19 @@ public class GestorNotas extends JFrame {
             return;
         }
 
+        // 1. Obtenemos la nota seleccionada (si hay alguna)
         Nota seleccionada = listaNotasUI.getSelectedValue();
         if (seleccionada == null) {
+            // 2. Si no hay nada seleccionado, creamos una nueva
             usuarioActual.getMisNotas().add(new Nota(tit, cont));
             lblEstado.setText("Nota creada automáticamente.");
         } else {
+            // 3. Si hay algo seleccionado, actualizamos esa nota
             seleccionada.setTitulo(tit);
             seleccionada.setContenido(cont);
             lblEstado.setText("Nota actualizada automáticamente.");
         }
+        // 4. Refrescamos la vista y guardamos en disco
         actualizarTodo();
         lblEstado.setText("Nota guardada automáticamente.");
     }
@@ -235,8 +250,10 @@ public class GestorNotas extends JFrame {
         JFileChooser selector = new JFileChooser();
         selector.setDialogTitle("Selecciona dónde exportar tus notas");
 
+        // 1. Abrimos el diálogo para guardar
         int resultado = selector.showSaveDialog(this);
         if (resultado == JFileChooser.APPROVE_OPTION) {
+            // 2. Obtenemos la ruta elegida por el usuario
             File destino = selector.getSelectedFile();
             try (PrintWriter pw = new PrintWriter(new FileWriter(destino + ".txt"))) {
                 pw.println("--- EXPORTACIÓN DE NOTAS ---");
@@ -253,9 +270,12 @@ public class GestorNotas extends JFrame {
     }
 
     private void eliminarYPersistir() {
+        // 1. Obtenemos la nota seleccionada
         Nota n = listaNotasUI.getSelectedValue();
         if (n != null) {
+            // 2. La eliminamos de la lista del usuario
             usuarioActual.getMisNotas().remove(n);
+            // 3. Refrescamos la vista y guardamos en disco
             actualizarTodo();
             limpiarCampos();
             lblEstado.setText("Nota eliminada correctamente.");
@@ -263,36 +283,48 @@ public class GestorNotas extends JFrame {
     }
 
     private void actualizarTodo() {
+        // 1. Refrescamos la lista con las notas actuales
         actualizarListaVisual(usuarioActual.getMisNotas());
-        GestionDatos.guardar(mapaGlobal); // Persistencia total en cada cambio
+        // 2. Guardamos todo en el archivo (persistencia)
+        GestionDatos.guardar(mapaGlobal);
     }
 
     /**
      * Filtra la lista según lo que el usuario escribe en el buscador.
      */
     private void filtrarNotas() {
+        // 1. Obtenemos el texto buscado (en minúsculas para comparar fácil)
         String q = txtBuscar.getText().toLowerCase();
         java.util.List<Nota> filtradas = new java.util.ArrayList<>();
 
+        // 2. Recorremos TODAS las notas del usuario
         for (Nota n : usuarioActual.getMisNotas()) {
+            // 3. Si el título contiene el texto buscado, lo añadimos a la lista filtrada
             if (n.getTitulo().toLowerCase().contains(q)) {
                 filtradas.add(n);
             }
         }
+        // 4. Actualizamos la lista visual solo con las que coinciden
         actualizarListaVisual(filtradas);
     }
 
     private void actualizarListaVisual(java.util.List<Nota> lista) {
+        // 1. Limpiamos la lista actual
         modeloLista.clear();
+        // 2. Añadimos todas las notas de la lista que nos han pasado
         for (Nota n : lista)
             modeloLista.addElement(n);
+        // 3. Actualizamos el contador de notas
         lblContador.setText("Notas: " + modeloLista.size());
     }
 
     private void limpiarCampos() {
+        // 1. Limpiamos los campos de texto
         txtTitulo.setText("");
         txtContenido.setText("");
+        // 2. Deseleccionamos cualquier nota que estuviera elegida
         listaNotasUI.clearSelection();
+        // 3. Desactivamos los botones de editar/eliminar
         gestionarBotones(false);
     }
 
